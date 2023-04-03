@@ -1,12 +1,12 @@
 //SPDX-License-Identifier: Unlicense
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.13;
 
 contract EtherWallet {
   mapping(address => uint) internal balances;
   event Depoist(address from, uint amount);
   event Withdraw(address to, uint amount);
 
-  function balanceOf(address account) external view returns (uint) {
+  function balanceOf(address account) public view returns (uint) {
     return balances[account];
   }
 
@@ -16,14 +16,15 @@ contract EtherWallet {
     emit Depoist(msg.sender, msg.value);
   }
 
-  function deposit() public payable {
+  function deposit() external payable {
     _deposit();
   }
 
-  function withdraw(address target, uint amount) external {
-    require(balances[msg.sender] <= amount, "Insufficient balance");
+  function withdraw(address payable target, uint amount) external {
+    require(balanceOf(msg.sender) >= amount, "Insufficient balance");
     balances[msg.sender] -= amount;
-    payable(target).transfer(amount);
+    (bool sent,) = target.call{value:amount}("");
+    require(sent, "Failed to withdraw");
     emit Withdraw(target, amount);
   }
 
